@@ -110,11 +110,11 @@ modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar un incidente manualme
 
 # === MODO 1: CLASIFICACIÓN MANUAL ===
 if modo == "📝 Clasificar una incidente manualmente":
-    texto = st.text_area("✏️ Ingresá una queja", height=200)
+    texto = st.text_area("✏️ Ingresá una texto", height=200)
 
-    if st.button("📊 Clasificar queja"):
+    if st.button("📊 Clasificar un incidente manualmente"):
         if not texto.strip():
-            st.warning("Ingresá una queja antes de clasificar.")
+            st.warning("Ingresá un texto antes de clasificar.")
         else:
             with st.spinner("Clasificando..."):
                 categoria, razon = clasificar_incidente_ferroviario_con_razon(texto)
