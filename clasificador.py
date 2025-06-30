@@ -39,48 +39,6 @@ if not API_KEY:
 
 genai.configure(api_key=API_KEY)
 
-# === FUNCIÓN DE CLASIFICACIÓN ===
-def clasificar_queja_con_razon(texto):
-    prompt = f"""Leé la siguiente queja de un pasajero y devolvé SOLO:
-
-1. La categoría más adecuada según esta lista:
-- Servicio Operativo y Frecuencia
-- Infraestructura y Mantenimiento
-- Seguridad y Control
-- Atención al Usuario
-- Otros
-- Conducta de Terceros
-- Incidentes y Emergencias
-- Accesibilidad y Público Vulnerable
-- Personal y Desempeño Laboral
-- Ambiente y Confort
-- Tarifas y Boletos
-
-2. Una breve razón de por qué fue clasificada así.
-
-Formato de salida:
-Categoría: <nombre de categoría>
-Razón: <explicación>
-
-Texto: {texto}
-"""
-    try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(prompt)
-        respuesta = response.text.strip()
-
-        categoria, razon = "", ""
-        for linea in respuesta.splitlines():
-            if linea.lower().startswith("categoría:") or linea.lower().startswith("categoria:"):
-                categoria = linea.split(":", 1)[1].strip()
-            elif linea.lower().startswith("razón:") or linea.lower().startswith("razon:"):
-                razon = linea.split(":", 1)[1].strip()
-        return categoria, razon
-
-    except Exception as e:
-        return "ERROR", str(e)
-
-
 # === FUNCIÓN DE CLASIFICACIÓN DE INCIDENTES FERROVIARIOS ===
 def clasificar_incidente_ferroviario_con_razon(texto):
     prompt = f"""Leé la siguiente descripción de un incidente ferroviario y devolvé SOLO:
@@ -129,9 +87,6 @@ Texto: {texto}
 """
     try:
         model = genai.GenerativeModel("gemini-2.5-flash")
-        # Asegurándome de usar los generation_config por defecto o adaptarlos si es necesario.
-        # En la función que me pasaste como referencia no había generation_config,
-        # si necesitas alguno específico, por favor indícamelo.
         response = model.generate_content(prompt)
         respuesta = response.text.strip()
 
@@ -148,13 +103,13 @@ Texto: {texto}
 
 
 # === INTERFAZ STREAMLIT ===
-st.set_page_config(page_title="Clasificador de Quejas", layout="centered")
-st.title("🧾 Clasificador de Quejas de Pasajeros")
+st.set_page_config(page_title="Clasificador de Incidentes", layout="centered")
+st.title("🧾 Clasificador de Incidentes")
 
-modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar una queja manualmente", "📂 Clasificar archivo Excel/CSV"])
+modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar un incidente manualmente", "📂 Clasificar archivo Excel/CSV"])
 
 # === MODO 1: CLASIFICACIÓN MANUAL ===
-if modo == "📝 Clasificar una queja manualmente":
+if modo == "📝 Clasificar una incidente manualmente":
     texto = st.text_area("✏️ Ingresá una queja", height=200)
 
     if st.button("📊 Clasificar queja"):
@@ -162,7 +117,7 @@ if modo == "📝 Clasificar una queja manualmente":
             st.warning("Ingresá una queja antes de clasificar.")
         else:
             with st.spinner("Clasificando..."):
-                categoria, razon = clasificar_queja_con_razon(texto)
+                categoria, razon = clasificar_incidente_ferroviario_con_razon(texto)
             if categoria == "ERROR":
                 st.error(f"❌ Error: {razon}")
             else:
@@ -183,7 +138,7 @@ else:
         st.write("✅ Archivo cargado. Columnas:")
         st.write(df.columns.tolist())
 
-        columna = st.selectbox("Seleccioná la columna con las quejas:", df.columns)
+        columna = st.selectbox("Seleccioná la columna con los posibles incidentes:", df.columns)
         espera = st.slider("⏱ Espera entre clasificaciones (segundos)", 0, 10, 5)
 
         if st.button("🚀 Clasificar archivo"):
@@ -195,7 +150,7 @@ else:
 
             for i, texto in enumerate(df[columna].astype(str)):
                 estado.text(f"Clasificando fila {i + 1} de {total}...")
-                categoria, razon = clasificar_queja_con_razon(texto)
+                categoria, razon = clasificar_incidente_ferroviario_con_razon(texto)
                 categorias.append(categoria)
                 razones.append(razon)
                 progreso.progress((i + 1) / total)
