@@ -109,7 +109,7 @@ st.title("🧾 Clasificador de Incidentes")
 modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar un incidente manualmente", "📂 Clasificar archivo Excel/CSV"])
 
 # === MODO 1: CLASIFICACIÓN MANUAL ===
-if modo == "📝 Clasificar una incidente manualmente":
+if modo == "📝 Clasificar un incidente manualmente":
     texto = st.text_area("✏️ Ingresá una texto", height=200)
 
     if st.button("📊 Clasificar un incidente manualmente"):
