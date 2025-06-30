@@ -1,4 +1,4 @@
-# VERSIÓN MEJORADA DE STREAMLIT CLOUD. PARA TRABAJAR CON CASOS O CON EL ARCHIVO DE EXCEL COMPLETO. ÚLTIMA VERSIÓN.
+
 import streamlit as st
 import pandas as pd
 import time
@@ -15,7 +15,7 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 
 # === FUNCIÓN DE CLASIFICACIÓN ===
-def clasificar_queja_con_razon(texto):
+def clasificar_incidente_con_razon(texto):
     prompt = f"""Leé la siguiente queja de un pasajero y devolvé SOLO:
 
 1. La categoría más adecuada según esta lista:
@@ -62,21 +62,21 @@ Texto: {texto}
         return "ERROR", str(e)
 
 # === INTERFAZ STREAMLIT ===
-st.set_page_config(page_title="Clasificador de Quejas", layout="centered")
-st.title("🧾 Clasificador de Quejas de Pasajeros")
+st.set_page_config(page_title="Clasificador de Incidentes Leves", layout="centered")
+st.title("🧾 Clasificador de Inciedentes Leves")
 
-modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar una queja manual", "📂 Clasificar archivo Excel/CSV"])
+modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar un incidente manualmente", "📂 Clasificar archivo Excel/CSV"])
 
 # === MODO 1: CLASIFICACIÓN MANUAL ===
-if modo == "📝 Clasificar una queja manual":
-    texto = st.text_area("✏️ Ingresá una queja", height=200)
+if modo == "📝 Clasificar un incidente manualmente":
+    texto = st.text_area("✏️ Ingresá un incidente", height=200)
 
-    if st.button("📊 Clasificar queja"):
+    if st.button("📊 Clasificar incidente"):
         if not texto.strip():
-            st.warning("Ingresá una queja antes de clasificar.")
+            st.warning("Ingresá un incidente antes de clasificar.")
         else:
             with st.spinner("Clasificando..."):
-                categoria, razon = clasificar_queja_con_razon(texto)
+                categoria, razon = clasificar_incidente_con_razon(texto)
             if categoria == "ERROR":
                 st.error(f"❌ Error: {razon}")
             else:
@@ -109,7 +109,7 @@ else:
 
             for i, texto in enumerate(df[columna].astype(str)):
                 estado.text(f"Clasificando fila {i + 1} de {total}...")
-                categoria, razon = clasificar_queja_con_razon(texto)
+                categoria, razon = clasificar_incidente_con_razon(texto)
                 categorias.append(categoria)
                 razones.append(razon)
                 progreso.progress((i + 1) / total)
