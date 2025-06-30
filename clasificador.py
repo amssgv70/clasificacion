@@ -1,10 +1,40 @@
-
 import streamlit as st
 import pandas as pd
 import time
 from io import BytesIO
 import os
 import google.generativeai as genai
+
+# === CONFIGURACIÓN BÁSICA DE LA APP ===
+#st.set_page_config(page_title="Clasificador de Quejas", layout="centered")
+
+
+# Obtener el código válido desde variable de entorno (o valor por defecto para pruebas)
+codigo_valido = os.getenv("CODIGO_ACCESO", "clasificar2024")
+
+# Inicializar estado de sesión
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+# Si no está autenticado, mostrar formulario y detener app si no es válido
+if not st.session_state.autenticado:
+    with st.form("form_codigo"):
+        st.markdown("### 🔒 Acceso restringido")
+        codigo = st.text_input("Ingresá el código de acceso:", type="password")
+        submit = st.form_submit_button("Ingresar")
+
+    if submit:
+        if codigo == codigo_valido:
+            st.session_state.autenticado = True
+            st.rerun()  # volver a cargar sin el formulario
+        else:
+            st.error("❌ Código incorrecto.")
+    st.stop()  # Detener todo lo demás hasta que esté autenticado
+
+
+
+
+
 
 # === CONFIGURACIÓN DE GEMINI ===
 API_KEY = os.getenv("GEMINI_API_KEY")
@@ -15,7 +45,7 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 
 # === FUNCIÓN DE CLASIFICACIÓN ===
-def clasificar_incidente_con_razon(texto):
+def clasificar_queja_con_razon(texto):
     prompt = f"""Leé la siguiente queja de un pasajero y devolvé SOLO:
 
 1. La categoría más adecuada según esta lista:
@@ -41,13 +71,7 @@ Texto: {texto}
 """
     try:
         model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(prompt,
-            generation_config={
-                "temperature": 0.2,
-                "top_p": 1,
-                "top_k": 1,
-                "max_output_tokens": 256
-            })
+        response = model.generate_content(prompt)
         respuesta = response.text.strip()
 
         categoria, razon = "", ""
@@ -62,21 +86,21 @@ Texto: {texto}
         return "ERROR", str(e)
 
 # === INTERFAZ STREAMLIT ===
-st.set_page_config(page_title="Clasificador de Incidentes Leves", layout="centered")
-st.title("🧾 Clasificador de Inciedentes Leves")
+st.set_page_config(page_title="Clasificador de Quejas", layout="centered")
+st.title("🧾 Clasificador de Quejas de Pasajeros")
 
-modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar un incidente manualmente", "📂 Clasificar archivo Excel/CSV"])
+modo = st.radio("¿Qué querés hacer?", ["📝 Clasificar una queja manualmente", "📂 Clasificar archivo Excel/CSV"])
 
 # === MODO 1: CLASIFICACIÓN MANUAL ===
-if modo == "📝 Clasificar un incidente manualmente":
-    texto = st.text_area("✏️ Ingresá un incidente", height=200)
+if modo == "📝 Clasificar una queja manualmente":
+    texto = st.text_area("✏️ Ingresá una queja", height=200)
 
-    if st.button("📊 Clasificar incidente"):
+    if st.button("📊 Clasificar queja"):
         if not texto.strip():
-            st.warning("Ingresá un incidente antes de clasificar.")
+            st.warning("Ingresá una queja antes de clasificar.")
         else:
             with st.spinner("Clasificando..."):
-                categoria, razon = clasificar_incidente_con_razon(texto)
+                categoria, razon = clasificar_queja_con_razon(texto)
             if categoria == "ERROR":
                 st.error(f"❌ Error: {razon}")
             else:
@@ -109,7 +133,7 @@ else:
 
             for i, texto in enumerate(df[columna].astype(str)):
                 estado.text(f"Clasificando fila {i + 1} de {total}...")
-                categoria, razon = clasificar_incidente_con_razon(texto)
+                categoria, razon = clasificar_queja_con_razon(texto)
                 categorias.append(categoria)
                 razones.append(razon)
                 progreso.progress((i + 1) / total)
@@ -134,5 +158,6 @@ else:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-
-
+if st.session_state.autenticado:
+    if st.button("🔒 Cerrar sesión"):
+        st.session_state.autenticado = False
